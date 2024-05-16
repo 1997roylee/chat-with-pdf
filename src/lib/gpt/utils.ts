@@ -192,7 +192,7 @@ export class OpenAIThread {
         if (resolvedOutputs.length > 0) {
           try {
             await openai.beta.threads.runs.submitToolOutputs(this.thread.id, this.run.id, {
-              tool_outputs: resolvedOutputs
+              tool_outputs: resolvedOutputs as any
             });
           } catch (error) {
             console.error('Error submitting tool outputs:', error);
