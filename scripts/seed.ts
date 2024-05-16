@@ -42,7 +42,8 @@ async function createPineconeIndex(
 
       console.log(`${indexName} index created successfully!`);
     } else {
-      return Promise.reject('Seeding the database aborted. Index already exists');
+      return index;
+      // return Promise.reject('Seeding the database aborted. Index already exists');
     }
   } catch (err) {
     console.error('An error occurred while attempting to create index:', err);
@@ -53,7 +54,7 @@ async function getChunkedDocsFromPdf() {
   console.log('Creating chunks from a document...');
   try {
     // by default pdf loader loads each page of a pdf as a Document
-    const loader = new PDFLoader('docs/Attention_Is_All_You_Need.pdf', {
+    const loader = new PDFLoader('docs/Demo.pdf', {
       splitPages: false
     });
     const docs = await loader.load();
@@ -79,6 +80,8 @@ async function seedPineconeDb(pineconeClient: Pinecone) {
   const indexName = getEnv('PINECONE_INDEX');
   const indexCloud = getEnv('PINECONE_CLOUD');
   const indexRegion = getEnv('PINECONE_REGION');
+
+  console.log(`Index name: ${indexName}`, `Index cloud: ${indexCloud}`, `Index region: ${indexRegion}`);
 
   try {
     await createPineconeIndex(pineconeClient, indexName, indexCloud, indexRegion);
@@ -106,9 +109,10 @@ async function seedPineconeDb(pineconeClient: Pinecone) {
 
 async function main() {
   validateEnviromentVariables();
-
   // Pinecone client automatically reads the PINECONE_API_KEY env variable
-  const pc = new Pinecone();
+  const pc = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY as string
+  });
 
   await seedPineconeDb(pc);
 }

@@ -7,6 +7,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Spinner } from './ui/spinner';
 import { useEffect, useRef, useState } from 'react';
+import { generateId } from 'ai';
 
 export function Chat() {
   const [suggestions, setSuggestions] = useState([
@@ -17,8 +18,10 @@ export function Chat() {
   ]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [enterKeyPressed, setEnterKeyPressed] = useState(false);
+
+  // const [messages, setMessages] = useState<Message[]>(initialMessages);
 
   const {
     messages,
@@ -28,14 +31,71 @@ export function Chat() {
     handleInputChange,
     handleSubmit,
     isLoading,
+
+    // data,
+    // append,
     stop
   } = useChat({
+    api: '/api/openai',
+    streamMode: 'text',
     initialMessages,
+    onResponse(response) {
+      // console.log('onResponse', response);
+      console.log('messages', messages);
+      async function readStream(stream: ReadableStream) {
+        // Get a lock on the stream:
+        let text = '';
+        const reader = stream.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        try {
+          while (true) {
+            // Read from the stream
+            const { done, value } = await reader.read();
+            // Exit the loop if the stream is done
+            if (done) {
+              // console.log(JSON.parse(text))
+              const newMessage = JSON.parse(text);
+
+              setMessages([
+                ...messages,
+                {
+                  role: 'assistant',
+                  id: generateId(),
+                  content: "【Source Information】\n" + newMessage.original
+                },
+                {
+                  role: 'assistant',
+                  id: generateId(),
+                  content: "【Rewrite】\n" +newMessage.rewritten
+                }
+              ]);
+              // append({ role: 'system', content: text });
+              break;
+            }
+
+            // const text = decoder.decode(value);
+            text += decoder.decode(value);
+            // process the data chunk
+            // console.log(value);
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      }
+
+      const reader = response.body;
+      readStream(reader!);
+    },
     onFinish() {
-      setShowSuggestions(true);
+      // console.log('onFinish', message);
+      // setShowSuggestions(true);
       setTimeout(() => scrollToBottom(containerRef), 100);
     }
   });
+  
+
+  console.log('messages', messages);
 
   useEffect(() => {
     setTimeout(() => scrollToBottom(containerRef), 100);

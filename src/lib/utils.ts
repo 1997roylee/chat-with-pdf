@@ -25,6 +25,6 @@ export const initialMessages: Message[] = [
     role: 'assistant',
     id: '0',
     content:
-      'Hi! I am your assistant. I am happy to help with your questions about the paper Attention is all you need'
+      'Hi! I am your assistant. I am happy to help with your questions about Hashkey is all you need'
   }
 ];
